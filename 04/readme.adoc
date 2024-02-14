@@ -1,0 +1,22 @@
+= NI-AM1 HW04
+
+== How to run
+
+The server is written in Rust and can be run using `cargo run`.
+Port to listen on can be specified in `src/main.rs`, in the `main` function.
+
+Requests for testing purposes are in the `requests.http` file which can be run using `httpyac --all requests.http`
+(potentially also some IDEs, but not completely sure about syntax compatibility).
+When executing through `httpyac`, id from the response when creating a tour is being read and following requests are formed accordingly.
+Port to send requests to can be adjusted in the variable `port` in the prologue.
+
+== Architecture
+
+The API consists of 3 endpoints: `/tour`, `/tour/{id}` and `/confirmation`.
+
+`/tour` accepts only the POST method, allowing creation of new tours.
+
+`/tour/{id}` accepts the GET and DELETE methods, allowing for reading and request for deletion.
+
+`/confirmation` accepts the POST method, with the `tour_id` in the request body being the id of the tour to be deleted.
+If the delete wasn't requested on the `/tour/{id}`, nothing happens (more specifically an error is returned).

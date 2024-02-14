@@ -1,0 +1,17 @@
+@host=0.0.0.0:3000
+
+{{
+exports.assert = require('assert');
+}}
+
+###
+# @name initialListing
+
+GET http://{{host}}/lastMinute/list
+
+# Asserts:
+{{
+  test('status code is 200 or 503', () => {
+    assert(response.statusCode == 200 || response.statusCode == 503);
+  });
+}}

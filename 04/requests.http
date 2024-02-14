@@ -1,0 +1,64 @@
+@server = 0.0.0.0
+@port = 3000
+
+###
+# @name set1_create1
+
+POST http://{{server}}:{{port}}/tour
+Content-Type: application/json
+Accept: application/json
+
+{
+"name": "aaaaaaaa"
+}
+
+# @description Should return 201 (tour was successfully created)
+
+===
+
+GET http://{{server}}:{{port}}/tour/{{set1_create1.id}}
+
+# @description Should return 200 (tour exists)
+
+===
+# @name set1_delete1
+
+DELETE http://{{server}}:{{port}}/tour/{{set1_create1.id}}
+
+# @description Should return 200 (tour exists)
+
+===
+
+GET http://{{server}}:{{port}}/tour/{{set1_create1.id}}
+
+# @description Should return 200 (deletion was not yet confirmed)
+
+===
+# @name set1_confirm1
+
+POST http://{{server}}:{{port}}/confirmation
+Content-Type: application/json
+
+{
+"tour_id": {{set1_create1.id}}
+}
+
+# @description Should return 204 (deletion was successfully confirmed)
+
+===
+
+GET http://{{server}}:{{port}}/tour/{{set1_create1.id}}
+
+# @description Should return 404 (tour does not exist anymore)
+
+###
+
+GET http://{{server}}:{{port}}/tour/404
+
+# @description Should return 404 (tour never existed)
+
+###
+
+DELETE http://{{server}}:{{port}}/tour/404
+
+# @description Should return 404 (tour never existed)

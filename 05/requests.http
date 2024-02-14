@@ -1,0 +1,409 @@
+@server = 0.0.0.0
+@port = 3000
+
+###
+# @name get_all_initial
+# @description Initial GET request on `/tour` (items from previous runs may be present)
+
+GET http://{{server}}:{{port}}/tour
+
+# Asserts: 
+?? status == 200
+?? header etag exists
+?? header last-modified exists
+
+{{
+
+get_all_initial_etag = response.headers["etag"]
+get_all_initial_lastModified = response.headers["last-modified"]
+
+}}
+
+###
+# @description Attempt GET on `/tour` with current ETag (should return 304)
+
+GET http://{{server}}:{{port}}/tour
+If-None-Match: {{get_all_initial_etag}}
+
+# Asserts: 
+?? status == 304
+?? body isFalse
+
+###
+# @description Attempt GET on `/tour` with current Last-Modified (should return 304)
+
+GET http://{{server}}:{{port}}/tour
+If-Modified-Since: {{get_all_initial_lastModified}}
+
+# Asserts: 
+?? status == 304
+?? body isFalse
+
+###
+# @name tour1_post
+# @description Insert a new Tour with no customers (should return 201)
+
+POST http://{{server}}:{{port}}/tour
+Content-Type: application/json
+
+{
+"name": "First tour"
+}
+
+# Asserts:
+
+?? status == 201
+?? header content-type matches ^application/json$
+?? header etag exists
+?? header last-modified exists
+?? header location matches ^/tour/{{tour1_post.id}}$
+?? body name matches ^First tour$
+
+
+{{
+
+tour1_post_etag = response.headers["etag"]
+tour1_post_lastModified = response.headers["last-modified"]
+
+}}
+
+###
+# @description Attempt GET on `/tour/:id` with current ETag (should return 304)
+
+GET http://{{server}}:{{port}}/tour/{{tour1_post.id}}
+If-None-Match: {{tour1_post_etag}}
+
+# Asserts: 
+?? status == 304
+
+###
+# @description Attempt GET on `/tour/:id` with current Last-Modified (should return 304)
+
+GET http://{{server}}:{{port}}/tour/{{tour1_post.id}}
+If-Modified-Since: {{tour1_post_lastModified}}
+
+# Asserts: 
+?? status == 304
+
+###
+# @description Attempt GET on `/tour` with outdated ETag (should return 200)
+
+GET http://{{server}}:{{port}}/tour
+If-None-Match: {{get_all_initial_etag}}
+
+# Asserts: 
+?? status == 200
+?? header etag exists
+?? header last-modified exists
+
+###
+# @description Attempt GET on `/tour` with outdated Last-Modified (should return 200)
+
+GET http://{{server}}:{{port}}/tour
+If-Modified-Since: {{get_all_initial_lastModified}}
+
+# Asserts: 
+?? status == 200
+?? header etag exists
+?? header last-modified exists
+
+###
+# @name tour2_post
+# @description Insert a new Tour with three customers (should return 201)
+
+POST http://{{server}}:{{port}}/tour
+Content-Type: application/json
+
+{
+"name": "Second tour",
+"customers": [1, 2, 3]
+}
+
+# Asserts:
+
+?? status == 201
+?? header content-type matches ^application/json$
+?? header etag exists
+?? header last-modified exists
+?? header location matches ^/tour/{{tour2_post.id}}$
+?? body name matches ^Second tour$
+?? body customers isArray
+
+{{
+
+tour2_post_etag = response.headers["etag"]
+tour2_post_lastModified = response.headers["last-modified"]
+
+}}
+
+###
+
+GET http://{{server}}:{{port}}/tour/{{tour1_post.id}}
+If-None-Match: {{tour1_post_etag}}
+
+# Asserts: 
+?? status == 304
+
+###
+
+GET http://{{server}}:{{port}}/tour/{{tour1_post.id}}
+If-Modified-Since: {{tour1_post_lastModified}}
+
+# Asserts: 
+?? status == 304
+
+###
+
+GET http://{{server}}:{{port}}/tour/{{tour2_post.id}}
+If-None-Match: {{tour2_post_etag}}
+
+# Asserts: 
+?? status == 304
+
+###
+
+GET http://{{server}}:{{port}}/tour/{{tour2_post.id}}
+If-Modified-Since: {{tour2_post_lastModified}}
+
+# Asserts: 
+?? status == 304
+
+###
+
+GET http://{{server}}:{{port}}/tour
+If-None-Match: {{get_all_initial_etag}}
+
+# Asserts: 
+?? status == 200
+
+###
+
+GET http://{{server}}:{{port}}/tour
+If-Modified-Since: {{get_all_initial_lastModified}}
+
+# Asserts: 
+?? status == 200
+
+###
+# @name get_all_after_inserts
+# @description GET request on `/tour` after inserts
+
+GET http://{{server}}:{{port}}/tour
+
+# Asserts:
+?? status == 200
+?? header etag exists
+?? header last-modified exists
+
+{{
+
+get_all_after_inserts_etag = response.headers["etag"]
+get_all_after_inserts_lastModified = response.headers["last-modified"]
+
+}}
+
+###
+# @description Attempt GET on `/tour` with current ETag (should return 304)
+
+GET http://{{server}}:{{port}}/tour
+If-None-Match: {{get_all_after_inserts_etag}}
+
+# Asserts: 
+?? status == 304
+?? body isFalse
+
+###
+# @description Attempt GET on `/tour` with current Last-Modified (should return 304)
+
+GET http://{{server}}:{{port}}/tour
+If-Modified-Since: {{get_all_after_inserts_lastModified}}
+
+# Asserts: 
+?? status == 304
+?? body isFalse
+
+###
+# @sleep 2000
+# @name tour1_put
+# @description Update first Tour with customers (should return 200)
+
+PUT http://{{server}}:{{port}}/tour/{{tour1_post.id}}
+Content-Type: application/json
+
+{
+"name": "First tour",
+"customers": [1001, 1002]
+}
+
+# Asserts:
+
+?? status == 200
+?? header content-type matches ^application/json$
+?? header etag exists
+?? header last-modified exists
+?? header location matches ^/tour/{{tour1_post.id}}$
+?? body name matches ^First tour$
+?? body customers isArray
+
+{{
+
+tour1_put_etag = response.headers["etag"]
+tour1_put_lastModified = response.headers["last-modified"]
+
+}}
+
+###
+# @description Attempt GET on `/tour` with current weak ETag (should return 304, because only customers changed)
+
+GET http://{{server}}:{{port}}/tour
+If-None-Match: {{get_all_after_inserts_etag}}
+
+# Asserts: 
+?? status == 304
+?? body isFalse
+
+###
+# @description Attempt GET on `/tour` with outdated Last-Modified (should return 200, because modification did happened)
+
+GET http://{{server}}:{{port}}/tour
+If-Modified-Since: {{get_all_after_inserts_lastModified}}
+
+# Asserts: 
+?? status == 200
+?? body isTrue
+
+###
+# @name get_all_after_update
+# @description GET request on `/tour` after update
+
+GET http://{{server}}:{{port}}/tour
+
+# Asserts:
+?? status == 200
+?? header etag exists
+?? header last-modified exists
+
+{{
+
+get_all_after_update_etag = response.headers["etag"]
+get_all_after_update_lastModified = response.headers["last-modified"]
+
+}}
+
+###
+# @description Attempt GET on `/tour` with current ETag (should return 304)
+
+GET http://{{server}}:{{port}}/tour
+If-None-Match: {{get_all_after_update_etag}}
+
+# Asserts: 
+?? status == 304
+?? body isFalse
+
+###
+# @description Attempt GET on `/tour` with current Last-Modified (should return 304)
+
+GET http://{{server}}:{{port}}/tour
+If-Modified-Since: {{get_all_after_update_lastModified}}
+
+# Asserts: 
+?? status == 304
+?? body isFalse
+
+###
+# @sleep 2000
+# @name tour2_delete
+# @description Delete second Tour (should return 204)
+
+DELETE http://{{server}}:{{port}}/tour/{{tour2_post.id}}
+
+# Asserts:
+?? status == 204
+?? body isFalse
+
+###
+# @description Attempt GET on `/tour` with outdated ETag (should return 200)
+
+GET http://{{server}}:{{port}}/tour
+If-None-Match: {{get_all_after_update_etag}}
+
+# Asserts: 
+?? status == 200
+?? body isTrue
+
+###
+# @description Attempt GET on `/tour` with outdated Last-Modified (should return 200)
+
+GET http://{{server}}:{{port}}/tour
+If-Modified-Since: {{get_all_after_update_lastModified}}
+
+# Asserts: 
+?? status == 200
+?? body isTrue
+
+###
+# @description Attempt GET with deleted id (should return 404)
+
+GET http://{{server}}:{{port}}/tour/{{tour2_post.id}}
+
+# Asserts: 
+?? status == 404
+?? body isFalse
+
+###
+# @description Attempt PUT with deleted id (should return 404)
+
+PUT http://{{server}}:{{port}}/tour/{{tour2_post.id}}
+Content-Type: application/json
+
+{
+"name": "Bogus tour",
+"customers": [4044041, 4044042, 4044043]
+}
+
+# Asserts: 
+?? status == 404
+?? body isFalse
+
+###
+# @description Attempt DELETE with deleted id (should return 404)
+
+GET http://{{server}}:{{port}}/tour/{{tour2_post.id}}
+
+# Asserts: 
+?? status == 404
+?? body isFalse
+
+###
+# @description Attempt GET with invalid id (should return 404)
+
+GET http://{{server}}:{{port}}/tour/404404
+
+# Asserts: 
+?? status == 404
+?? body isFalse
+
+###
+# @description Attempt PUT with invalid id (should return 404)
+
+PUT http://{{server}}:{{port}}/tour/404404
+Content-Type: application/json
+
+{
+"name": "Bogus tour",
+"customers": [4044041, 4044042, 4044043]
+}
+
+# Asserts: 
+?? status == 404
+?? body isFalse
+
+###
+# @description Attempt DELETE with invalid id (should return 404)
+
+GET http://{{server}}:{{port}}/tour/404404
+
+# Asserts: 
+?? status == 404
+?? body isFalse
+

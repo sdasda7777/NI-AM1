@@ -1,0 +1,10 @@
+= NI-AM1 HW01
+
+== How to run
+
+The server is written in Rust and can be run using `cargo run`.
+Port to listen on can be specified in `src/main.rs`, in the `main` function.
+
+Requests for testing purposes are in the `requests.http` file which can be run using `httpyac --all requests.http`
+(potentially also some IDEs, but not completely sure about syntax compatibility).
+Port to send requests to can be adjusted in the variable `port` in the prologue.

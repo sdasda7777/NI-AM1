@@ -1,0 +1,21 @@
+
+syntax = "proto3";
+
+package payments;
+
+service PaymentService {
+  rpc ListAllPayments (EmptyMessage) returns (PaymentList) {}
+  rpc ProcessPayment  (Payment)      returns (Payment)     {}
+}
+
+message EmptyMessage {}
+
+message Payment {
+  string orderId    = 1;
+  string cardNumber = 2;
+  string cardOwner  = 3;
+}
+
+message PaymentList {
+    repeated Payment payments = 1;
+}

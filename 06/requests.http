@@ -1,0 +1,167 @@
+proto < ./proto/bookingservice.proto
+@host=localhost:3000
+
+{{
+console.log = console.info;
+}}
+
+###
+# @name initialListing
+
+GRPC /FlightBookingService/ListBookings
+
+?? status == 0
+?? body exists
+{{
+initialListing_bookings = response.parsedBody.bookings;
+//console.log(initialListing_bookings)
+}}
+
+###
+# @name addBooking1
+
+GRPC /FlightBookingService/AddBooking
+
+{
+  "passengerName": "John Smith",
+  "departureDate": "2023-12-05",
+  "arrivalDate": "2023-12-05",
+  "departureAirport": "PRG",
+  "arrivalAirport": "BER"
+}
+
+?? status == 0
+?? body bookingId exists
+?? body passengerName matches ^John Smith$
+?? body departureDate matches ^2023-12-05$
+?? body arrivalDate matches ^2023-12-05$
+?? body departureAirport matches ^PRG$
+?? body arrivalAirport matches ^BER$
+
+###
+# @name listAfterAdd
+
+GRPC /FlightBookingService/ListBookings
+
+?? status == 0
+?? body bookings exists
+
+{{
+  const equal = require('assert');
+  test('response is longer', () => {
+    equal((initialListing_bookings == undefined && response.parsedBody.bookings.length == 1)
+          || (response.parsedBody.bookings.length == initialListing_bookings.length + 1),
+          true);
+  });
+}}
+
+###
+# @name updateBooking1
+
+GRPC /FlightBookingService/UpdateBooking
+
+{
+  "bookingId": "{{addBooking1.bookingId}}",
+  "passengerName": "Jim Smith",
+  "departureDate": "2023-12-05",
+  "arrivalDate": "2023-12-06",
+  "departureAirport": "PRG",
+  "arrivalAirport": "GVA"
+}
+
+?? status == 0
+?? body passengerName matches ^Jim Smith$
+?? body departureDate matches ^2023-12-05$
+?? body arrivalDate matches ^2023-12-06$
+?? body departureAirport matches ^PRG$
+?? body arrivalAirport matches ^GVA$
+
+###
+
+GRPC /FlightBookingService/ListBookings
+
+?? status == 0
+?? body bookings exists
+
+{{
+  const equal = require('assert');
+  test('response is same length', () => {
+    equal(response.parsedBody.bookings.length, listAfterAdd.bookings.length);
+  });
+}}
+
+###
+# @name addBooking2
+
+GRPC /FlightBookingService/AddBooking
+
+{
+  "passengerName": "Robert Brown",
+  "departureDate": "2024-01-08",
+  "arrivalDate": "2024-01-08",
+  "departureAirport": "BER",
+  "arrivalAirport": "PRG"
+}
+
+?? status == 0
+?? body bookingId exists
+?? body passengerName matches ^Robert Brown$
+?? body departureDate matches ^2024-01-08$
+?? body arrivalDate matches ^2024-01-08$
+?? body departureAirport matches ^BER$
+?? body arrivalAirport matches ^PRG$
+
+###
+
+GRPC /FlightBookingService/ListBookings
+
+?? status == 0
+?? body bookings exists
+
+{{
+  const equal = require('assert');
+  test('response is longer', () => {
+    equal(response.parsedBody.bookings.length, listAfterAdd.bookings.length + 1);
+  });
+}}
+
+###
+# @name removeBooking2
+
+GRPC /FlightBookingService/RemoveBooking
+
+{
+  "bookingId": "{{addBooking2.bookingId}}"
+}
+
+?? status == 0
+?? body bookingId exists
+?? body passengerName matches ^Robert Brown$
+?? body departureDate matches ^2024-01-08$
+?? body arrivalDate matches ^2024-01-08$
+?? body departureAirport matches ^BER$
+?? body arrivalAirport matches ^PRG$
+
+###
+
+GRPC /FlightBookingService/ListBookings
+
+?? status == 0
+?? body bookings exists
+
+{{
+  const equal = require('assert');
+  test('response is shorter', () => {
+    equal(response.parsedBody.bookings.length, listAfterAdd.bookings.length);
+  });
+}}
+
+###
+
+GRPC /FlightBookingService/RemoveBooking
+
+{
+  "bookingId": "{{addBooking2.bookingId}}"
+}
+
+?? status == 5

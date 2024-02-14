@@ -1,0 +1,15 @@
+
+syntax = "proto3";
+
+package model;
+
+import "google/protobuf/wrappers.proto";
+
+service CardsService {
+    rpc validateCard (Card) returns (google.protobuf.BoolValue) {}
+}
+
+message Card {
+  string cardNumber = 1;
+  string cardOwner = 2;
+}

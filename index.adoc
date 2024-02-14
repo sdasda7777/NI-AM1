@@ -1,0 +1,10 @@
+= NI-AM1 Homework 
+
+My solutions for tasks from the NI-AM1 course using Rust, Axum and occasionally Tonic.
+
+* 01: Simple converter from plain text to JSON
+* 04: CRUD server with delete confirmation
+* 05: Server with middleware for conditional requests
+* 06: Server fulfilling Protobuf spec
+* 07: Server which uses Protobuf spec
+* 09: Simple load balancer

@@ -1,0 +1,160 @@
+proto < ./proto/paymentservice.proto
+@host=localhost:3000
+
+{{
+exports.equal = require('assert');
+console.log = console.info;
+now_str = Date.now().toString()
+now_str_a = now_str + 'a'
+now_str_b = now_str + 'b'
+}}
+
+###
+# @name initialListing
+
+GRPC /PaymentService/ListAllPayments
+
+?? status == 0
+?? body exists
+
+{{
+initialListing_payments = response.parsedBody.payments;
+}}
+
+###
+# Should fail because of invalid orderId
+
+GRPC /PaymentService/ProcessPayment
+
+{
+  "orderId": "",
+  "cardNumber": "1234-1234-1234-1234",
+  "cardOwner": "CardOwner"
+}
+
+?? status == 3
+
+###
+
+GRPC /PaymentService/ListAllPayments
+
+?? status == 0
+?? body exists
+
+{{
+  test('ListAll is unchanged', () => {
+    equal((initialListing_payments == undefined && response.parsedBody.payments == undefined)
+          || (response.parsedBody.payments.length == initialListing_payments.length),
+          true);
+  });
+}}
+
+###
+# @name addPayment1
+
+GRPC /PaymentService/ProcessPayment
+
+{
+  "orderId": "{{now_str_a}}",
+  "cardNumber": "1234-1234-1234-1234",
+  "cardOwner": "CardOwner"
+}
+
+?? status == 0
+?? body orderId exists
+?? body cardNumber exists
+?? body cardOwner exists
+
+###
+# @name listAfterAdd
+
+GRPC /PaymentService/ListAllPayments
+
+?? status == 0
+?? body payments exists
+
+{{
+  test('ListAll is longer', () => {
+    equal((initialListing_payments == undefined && response.parsedBody.payments.length == 1)
+          || (response.parsedBody.payments.length == initialListing_payments.length + 1),
+          true);
+  });
+}}
+
+###
+# Should fail because of duplicate orderId
+
+GRPC /PaymentService/ProcessPayment
+
+{
+  "orderId": "{{now_str_a}}",
+  "cardNumber": "1234-1234-1234-1234",
+  "cardOwner": "CardOwner"
+}
+
+?? status == 6
+
+###
+
+GRPC /PaymentService/ListAllPayments
+
+?? status == 0
+?? body payments exists
+
+{{
+  test('ListAll is unchanged', () => {
+    equal(response.parsedBody.payments.length, listAfterAdd.payments.length);
+  });
+}}
+
+###
+# Should fail because of cardNumber
+
+GRPC /PaymentService/ProcessPayment
+
+{
+  "orderId": "{{now_str_b}}",
+  "cardNumber": "1234-1234-1234",
+  "cardOwner": "CardOwner"
+}
+
+?? status == 3
+
+###
+
+GRPC /PaymentService/ListAllPayments
+
+?? status == 0
+?? body payments exists
+
+{{
+  test('ListAll is unchanged', () => {
+    equal(response.parsedBody.payments.length, listAfterAdd.payments.length);
+  });
+}}
+
+###
+# Should fail because of cardOwner
+
+GRPC /PaymentService/ProcessPayment
+
+{
+  "orderId": "{{now_str_b}}",
+  "cardNumber": "1234-1234-1234-1234",
+  "cardOwner": "Card"
+}
+
+?? status == 3
+
+###
+
+GRPC /PaymentService/ListAllPayments
+
+?? status == 0
+?? body payments exists
+
+{{
+  test('ListAll is unchanged', () => {
+    equal(response.parsedBody.payments.length, listAfterAdd.payments.length);
+  });
+}}

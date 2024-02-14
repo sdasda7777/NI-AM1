@@ -1,0 +1,45 @@
+@server = 0.0.0.0
+@port = 3000
+@data_separator = ===
+
+###
+
+POST http://{{server}}:{{port}}/transform
+
+###
+
+POST http://{{server}}:{{port}}/transform
+
+asdf
+
+###
+
+POST http://{{server}}:{{port}}/transform
+
+Dear Sir or Madam,
+
+{{data_separator}}
+Tour id: "1"
+Location: "Bohemian Switzerland"
+{{data_separator}}
+
+Regards,
+Jan Novak
+
+###
+
+POST http://{{server}}:{{port}}/transform
+
+Dear Sir or Madam,
+
+please find the details about my booking below:
+
+{{data_separator}}
+Tour id: "1"
+Location: "Bohemian Switzerland"
+Person: "Jan Novak"
+{{data_separator}}
+
+Regards,
+Jan Novak
+
